@@ -1,0 +1,29 @@
+{
+  "managers": [
+    500742025,
+    5303361087
+  ],
+  "channels": {
+    "-1003728418453": {
+      "chatId": -1003728418453,
+      "title": "Test channel 2",
+      "username": null,
+      "testIdentifier": "bek",
+      "updatedAt": "2026-03-19T09:35:48.815Z"
+    },
+    "-1003786713546": {
+      "chatId": -1003786713546,
+      "title": "Test channel 3",
+      "username": null,
+      "testIdentifier": null,
+      "updatedAt": "2026-03-19T09:35:35.391Z"
+    },
+    "-1003792486223": {
+      "chatId": -1003792486223,
+      "title": "Test channel",
+      "username": null,
+      "testIdentifier": null,
+      "updatedAt": "2026-03-19T09:35:15.101Z"
+    }
+  }
+}

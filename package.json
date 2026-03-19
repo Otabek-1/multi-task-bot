@@ -1,0 +1,24 @@
+{
+  "name": "multi_job_bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "multi-channel-bot.js",
+  "scripts": {
+    "start": "node multi-channel-bot.js",
+    "start:bot": "node bot-service.js",
+    "start:http": "node http-service.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "fs": "^0.0.1-security",
+    "multer": "^2.1.1",
+    "path": "^0.12.7",
+    "telegraf": "^4.16.3"
+  }
+}
