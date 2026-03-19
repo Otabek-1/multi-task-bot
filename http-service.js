@@ -2,7 +2,7 @@ const express = require("express");
 const multer = require("multer");
 const { Telegraf, Input } = require("telegraf");
 const { BOT_TOKEN, LISTEN_HOST, MANAGER_IDS, MAX_FILE_MB, PORT } = require("./lib/config");
-const { bindChannel, getChannelRows, refreshStore, resolveTargetChannel } = require("./lib/store");
+const { bindChannel, getChannelRows, normalizeSkill, refreshStore, resolveTargetChannel } = require("./lib/store");
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -64,18 +64,19 @@ app.post("/send-result", upload.single("file"), async (req, res) => {
   try {
     refreshStore();
     const testIdentifier = String(req.body?.testIdentifier || "").trim();
-    if (!testIdentifier) {
+    const skill = normalizeSkill(req.body?.skill);
+    if (!testIdentifier || !skill) {
       return res.status(400).json({
         ok: false,
-        error: "testIdentifier is required",
+        error: "testIdentifier and skill are required",
       });
     }
 
-    const channel = resolveTargetChannel(testIdentifier);
+    const channel = resolveTargetChannel(testIdentifier, skill);
     if (!channel) {
       return res.status(404).json({
         ok: false,
-        error: "channel_not_found_for_testIdentifier",
+        error: "channel_not_found_for_testIdentifier_and_skill",
       });
     }
 
@@ -95,6 +96,7 @@ app.post("/send-result", upload.single("file"), async (req, res) => {
         chatId: channel.chatId,
         title: channel.title,
         testIdentifier: channel.testIdentifier,
+        skill: channel.skill,
       },
       telegramMessageId: telegramResponse.message_id,
     });
@@ -110,15 +112,16 @@ app.post("/send-result", upload.single("file"), async (req, res) => {
 app.post("/bind-channel", async (req, res) => {
   const chatId = String(req.body?.chatId || "").trim();
   const testIdentifier = String(req.body?.testIdentifier || "").trim();
+  const skill = normalizeSkill(req.body?.skill);
 
-  if (!chatId || !testIdentifier) {
+  if (!chatId || !testIdentifier || !skill) {
     return res.status(400).json({
       ok: false,
-      error: "chatId and testIdentifier are required",
+      error: "chatId, testIdentifier and skill are required",
     });
   }
 
-  const channel = bindChannel(chatId, testIdentifier);
+  const channel = bindChannel(chatId, testIdentifier, skill);
   if (!channel) {
     return res.status(404).json({ ok: false, error: "channel_not_found" });
   }

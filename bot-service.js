@@ -4,6 +4,8 @@ const storeModule = require("./lib/store");
 
 const { bindChannel, ensureChannel, getChannelRows, refreshStore } = storeModule;
 
+const SKILLS = ["listening", "reading", "writing", "speaking"];
+
 function isManager(userId) {
   return MANAGER_IDS.includes(Number(userId));
 }
@@ -21,14 +23,15 @@ function buildChannelListText() {
     .map((channel, index) => {
       const handle = channel.username ? `@${channel.username}` : channel.chatId;
       const identifier = channel.testIdentifier || "biriktirilmagan";
-      return `${index + 1}. ${channel.title}\nID: ${handle}\nTest identifier: ${identifier}`;
+      const skill = channel.skill || "biriktirilmagan";
+      return `${index + 1}. ${channel.title}\nID: ${handle}\nTest identifier: ${identifier}\nSkill: ${skill}`;
     })
     .join("\n\n");
 }
 
 function buildChannelKeyboard() {
   const rows = getChannelRows()
-    .filter((channel) => !channel.testIdentifier)
+    .filter((channel) => !channel.testIdentifier || !channel.skill)
     .map((channel) => [
       Markup.button.callback(`${channel.title} ni biriktirish`, `bind:${channel.chatId}`),
     ]);
@@ -111,9 +114,9 @@ bot.action(/^bind:(-?\d+)$/, async (ctx) => {
   }
 
   ctx.session = ctx.session || {};
-  ctx.session.pendingBind = { chatId };
+  ctx.session.pendingBind = { chatId, step: "identifier" };
   await ctx.answerCbQuery();
-  await ctx.reply(`${channel.title} uchun test identifier ni yuboring. Masalan: mock-ielts-01`);
+  await ctx.reply(`${channel.title} uchun test identifier ni yuboring. Masalan: super-edu`);
 });
 
 bot.on("text", async (ctx, next) => {
@@ -128,17 +131,38 @@ bot.on("text", async (ctx, next) => {
 
   const identifier = ctx.message.text.trim();
   if (!identifier || identifier === "Channel list") {
-    return ctx.reply("Yaroqli test identifier yuboring.");
+    return ctx.reply("Yaroqli qiymat yuboring.");
   }
 
-  const channel = bindChannel(pendingBind.chatId, identifier);
+  if (pendingBind.step === "identifier") {
+    ctx.session.pendingBind = {
+      chatId: pendingBind.chatId,
+      step: "skill",
+      testIdentifier: identifier,
+    };
+    return ctx.reply(
+      `Endi skill yuboring: ${SKILLS.join(", ")}`
+    );
+  }
+
+  if (pendingBind.step !== "skill") {
+    ctx.session.pendingBind = null;
+    return next();
+  }
+
+  const skill = identifier.toLowerCase();
+  if (!SKILLS.includes(skill)) {
+    return ctx.reply(`Skill noto'g'ri. Faqat shulardan biri bo'lsin: ${SKILLS.join(", ")}`);
+  }
+
+  const channel = bindChannel(pendingBind.chatId, pendingBind.testIdentifier, skill);
   ctx.session.pendingBind = null;
 
   if (!channel) {
     return ctx.reply("Kanal topilmadi.");
   }
 
-  await ctx.reply(`Biriktirildi: ${channel.title} -> ${identifier}`);
+  await ctx.reply(`Biriktirildi: ${channel.title} -> ${pendingBind.testIdentifier} / ${skill}`);
   await showChannelList(ctx);
 });
 
